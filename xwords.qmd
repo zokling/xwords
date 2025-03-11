@@ -1,16 +1,13 @@
 ---
 title: "xwords"
 format: html
-editor: visual
+editor: source
 ---
 
 ```{r}
 library(tidyverse)
 library(glue)
 ```
-
-## data
-
 ```{r}
 xwords <- read.csv("xwstats.csv")
 
@@ -43,15 +40,9 @@ xwords$day.of.week <- factor(xwords$day.of.week,
 head(xwords)
 ```
 
-unsolved
+### exploration
 
-```{r}
-xwords |>
-  filter(solved == "False") |>
-  select(completed.datetime, checks, reveals, day.of.week)
-```
-
-### descriptive stats
+date range
 
 ```{r}
 min(xwords$puzzle.date)
@@ -62,6 +53,18 @@ max(xwords$completed.datetime)
 
 ```
 
+unsolved
+
+```{r}
+xwords |>
+  filter(solved == "False") |>
+  select(completed.datetime, checks, reveals, day.of.week)
+
+xwords |>
+  filter(solved == "False") |>
+  count(day.of.week)
+```
+
 ### time taken
 
 ```{r}
@@ -70,23 +73,24 @@ xwords |>
   geom_histogram()
 ```
 
-crazy outlier
+crazy outliers
 
 ```{r}
 xwords |>
-  filter(time.taken.m > 600)
+  filter(time.taken.m > 60)
+
+xwords$time.taken.m[xwords$time.taken.m > 200] <- NA
 ```
 
 ```{r}
-xwords |>
-  filter(time.taken.m < 600) |>
+  xwords |>
   ggplot(aes(x = time.taken.m)) +
   geom_histogram()
 ```
 
 ```{r}
 xwords |>
-  filter(!(time.taken.m > 600) & day.of.week != "Sunday") |>  # remove outlier. remove sundays
+  filter(day.of.week != "Sunday") |>  # remove sundays
   ggplot(aes(x = time.taken.m)) +
   geom_histogram(aes(fill = day.of.week)) +
   facet_wrap(~day.of.week) +
@@ -97,12 +101,12 @@ percentages with density plot
 
 ```{r}
 xwords |>
-  filter(!(time.taken.m > 600) & day.of.week != "Sunday") |>  # remove outlier. remove sundays
+  filter(day.of.week != "Sunday") |>  # remove outlier. remove sundays
   ggplot(aes(x = time.taken.m)) +
   geom_density(aes(fill = day.of.week)) +
   facet_wrap(~day.of.week) +
-  labs(title = "")
-  theme_light()
+  labs(title = "") +
+  theme_bw()
 ```
 
 histo overall
@@ -144,13 +148,14 @@ ggsave("xword_solve_times_dist.jpeg", width = 9, height = 5, units = "in")
 ```
 
 median
+
 ```{r}
 xwords |>
   group_by(day.of.week) |>
-  summarize(median_solvetime = median(time.taken.m),
-            mean_solvetime = mean(time.taken.m))
+  summarize(median_solvetime = median(time.taken.m, na.rm = T),
+            mean_solvetime = mean(time.taken.m, na.rm = T))
 ```
-
+looking surprisingly symmetrical
 
 ### puzzle solving speeds over time
 
@@ -164,7 +169,6 @@ xwords |>
   geom_smooth(se = F, method = "lm") +
   labs(subtitle = "date completed vs. time taken")
 ```
-
 
 ```{r}
 xwords <- xwords |>
@@ -186,6 +190,7 @@ xwords |>
   geom_smooth(se = F, method = "lm") +
   labs(subtitle = "date completed vs. time taken")
 ```
+
 ```{r}
 xwords |>
   filter(!(time.taken.m > 600) & day.of.week != "Sunday" & 
@@ -193,7 +198,6 @@ xwords |>
   ggplot(aes(x = as.Date(completed.datetime), y = time.taken.m, color = day.of.week)) +
   geom_line(linewidth = 1) 
 ```
-
 
 by publishing date
 

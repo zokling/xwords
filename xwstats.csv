@@ -1,4 +1,13 @@
 Solved,Puzzle Date,Day of Week,Time Taken,Adjusted Time,Average Time,Average Adjusted Time,Completed At (ET),Checks,Reveals,Constructor,Excluded
+True,2025-03-10,Mo,339,339,302.1,302.1,2025-03-10 21:06:27,0,0,Patti Varol,False
+True,2025-03-08,Sa,857,857,1131.2,1713.0,2025-03-09 11:40:05,0,0,Joe Deeney,False
+True,2025-03-03,Mo,241,241,302.7,302.7,2025-03-03 10:16:57,0,0,Harrison Walden,False
+True,2025-02-26,We,588,588,492.7,1284.0,2025-03-04 23:07:10,0,0,Dan Caprera,False
+True,2025-02-25,Tu,446,446,403.6,403.6,2025-03-04 21:19:46,0,0,Greg Snitkin,False
+True,2025-02-24,Mo,268,268,306.2,306.2,2025-02-26 21:18:35,0,0,Rena Cohen,False
+True,2025-02-22,Sa,730,730,1152.3,1734.1,2025-02-22 11:14:37,0,0,Rose Conlon,False
+False,2025-02-21,Fr,1086,3883,714.8,714.8,2025-02-22 10:59:08,194,1,Colin Adams,False
+False,2025-02-20,Th,15237,20762,656.7,967.3,2025-02-21 23:10:59,190,0,Peter Gorman,False
 True,2025-02-19,We,611,611,468.7,1260.0,2025-02-19 10:44:45,0,0,Joe Deeney,False
 True,2025-02-18,Tu,268,268,411.4,411.4,2025-02-18 12:13:33,0,0,Erik Agard,False
 True,2025-02-17,Mo,303,303,311.2,311.2,2025-02-17 21:17:35,0,0,Kate Hawkins and Erica Hsiung Wojcik,False
