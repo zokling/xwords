@@ -4,6 +4,7 @@ format: html
 editor: source
 ---
 
+# set up and data
 ```{r}
 library(tidyverse)
 library(glue)
@@ -13,21 +14,26 @@ library(glue)
 xwords <- read.csv("xwstats.csv")
 
 xwords <- xwords |>
+  filter(day_of_week != "Sunday") |> # never do sundays and i don't know what these are
   mutate(puzzle_date = as.Date(puzzle_date),
          completed_at = as_datetime(completed_at_et),
          time_taken_m = time_taken/60,
          day_of_week = factor(day_of_week, 
-                             levels = c("Sunday", "Monday", 
+                             levels = c("Monday", 
                                         "Tuesday", "Wednesday", 
                                         "Thursday", "Friday", 
                                         "Saturday"), 
                              ordered = T)
   ) |>
+  filter(as.Date(completed_at) > ymd("2023-01-01")) |> 
   select(-completed_at_et, -solved)
   
-# manage outliers
+# remove outliers that represent NYT app problems
 xwords$time_taken_m[xwords$time_taken_m > 120] <- NA
 
+# min and max completion date parameters for chart subtitles
+mindate <- as.Date(min(xwords$completed_at)) #earliest completion date
+maxdate <- as.Date(max(xwords$completed_at)) #latest completion date
 
 head(xwords)
 ```
@@ -49,14 +55,6 @@ xwords |>
   geom_histogram()
 ```
 
-crazy outliers
-
-```{r}
-xwords |>
-  filter(time_taken_m > 60)
-
-```
-
 ```{r}
   xwords |>
   ggplot(aes(x = time_taken_m)) +
@@ -65,7 +63,6 @@ xwords |>
 
 ```{r}
 xwords |>
-  filter(day_of_week != "Sunday") |>  # remove sundays
   ggplot(aes(x = time_taken_m)) +
   geom_histogram(aes(fill = day_of_week)) +
   facet_wrap(~day_of_week) +
@@ -76,7 +73,6 @@ percentages with density plot
 
 ```{r}
 xwords |>
-  filter(day_of_week != "Sunday") |>  # remove outlier. remove sundays
   ggplot(aes(x = time_taken_m)) +
   geom_density(aes(fill = day_of_week)) +
   facet_wrap(~day_of_week) +
@@ -87,9 +83,6 @@ xwords |>
 histo overall
 
 ```{r}
-mindate <- as.Date(min(xwords$completed_at)) #earliest completion date
-maxdate <- as.Date(max(xwords$completed_at)) #latest completion date
-
 xwords |>
   filter(!(time_taken_m > 60) & day_of_week != "Su") |>  # remove outlier. remove sundays
   ggplot(aes(x = time_taken_m)) +
@@ -138,7 +131,6 @@ have gone down...
 
 ```{r}
 xwords |>
-  filter(!(time_taken_m > 600) & day_of_week != "Sunday") |>
   ggplot(aes(x = as.Date(completed_at), y = time_taken_m)) +
   geom_point() +
   geom_smooth(se = F, method = "lm") +
@@ -149,27 +141,28 @@ xwords |>
 xwords <- xwords |>
   mutate(completed_daysfromstart = as.Date(completed_at) - as.Date(min(completed_at)))
 
-lm <- lm(time_taken_m ~ completed_daysfromstart, data = xwords)
-lm
+lm <- lm(time_taken ~ completed_daysfromstart, data = xwords)
+summary(lm)
 ```
-
 for every additional day i spend about half a second less on average
 
 but maybe only because i'm doing more mondays
 
 ```{r}
 xwords |>
-  filter(!(time_taken_m > 600) & day_of_week != "Sunday") |>
   ggplot(aes(x = as.Date(completed_at), y = time_taken_m, color = day_of_week)) +
   geom_point() +
   geom_smooth(se = F, method = "lm") +
   labs(subtitle = "date completed vs. time taken")
+
+lm2 <- lm(time_taken ~ completed_daysfromstart + factor(day_of_week, ordered = F), data = xwords)
+summary(lm2)
 ```
+controlling for day of puzzle there is no longer a trend :,(
 
 ```{r}
 xwords |>
-  filter(!(time_taken_m > 600) & day_of_week != "Sunday" & 
-           as.Date(completed_at) >= ymd("2024-11-01")) |>
+ # filter(as.Date(completed_at) >= ymd("2024-11-01")) |>
   ggplot(aes(x = as.Date(completed_at), y = time_taken_m, color = day_of_week)) +
   geom_line(linewidth = 1) 
 ```
@@ -178,32 +171,29 @@ by publishing date
 
 ```{r}
 xwords |>
-  filter(!(time_taken_m > 600) & day_of_week != "Sunday") |>
   ggplot(aes(x = puzzle_date, y = time_taken_m, color = day_of_week)) +
   geom_point() +
   labs(subtitle = "date of publication vs. time taken")
-
-
 ```
 
 ### how many puzzles was i doing over time?
 
-```{r}
+```{r fig.width = 9 fig.height = 5}
 annots <- tibble(
   label = c("Final semester\nof graduate school","Marriage and\nhoneymoon",
-            "Seasonal\ndepression"),
-  xmin = c(ymd("2024-01-20"), ymd("2024-07-20"), ymd("2024-11-01")),
-  xmax = c(ymd("2024-05-15"), ymd("2024-08-01"), ymd("2025-01-30"))
+            "Seasonal\ndepression", "Distracted by\ncryptics"),
+  xmin = c(ymd("2024-01-20"), ymd("2024-07-20"), ymd("2024-11-01"), ymd("2025-07-15")),
+  xmax = c(ymd("2024-05-15"), ymd("2024-08-01"), ymd("2025-01-30"), ymd("2025-10-25"))
 )
 
 xwords |>
   ggplot(aes(x = as.Date(completed_at), fill = day_of_week)) +
-  annotate("rect", xmin = annots$xmin[1:3],
-           xmax = annots$xmax[1:3],
+  annotate("rect", xmin = annots$xmin[1:4],
+           xmax = annots$xmax[1:4],
            ymin = 0, ymax = 24,
            alpha = 0.5, fill = "grey") +
-  annotate("text", label = annots$label[1:3], 
-           x = annots$xmin[1:3],
+  annotate("text", label = annots$label[1:4], 
+           x = annots$xmin[1:4],
            y = 23,
            color = "grey30",
            size = 3, 
@@ -217,24 +207,6 @@ xwords |>
        fill = "Day of puzzle") +
   theme_light()
 
-ggsave("xword_solve_over_time.jpeg", width = 9, height = 5, units = "in")
+ggsave("xword_solve_over_time.jpeg", width = 9.5, height = 5, units = "in")
 ```
 
-```{r}
-
-countbyweek <- xwords |>
-  mutate(week_completed = week(completed_at) + 
-           52*(year(completed_at)- min(year(completed_at)))) |>
-  count(week_completed)
-
-dfcounts <- data.frame(week_completed = min(countbyweek$week_completed):max(countbyweek$week_completed))
-
-countbyweek <- dfcounts |>
-  left_join(countbyweek, by = "week_completed") |>
-  mutate(n = if_else(is.na(n), 0, n))
-
-ggplot(countbyweek, aes(x = week_completed, y = n)) +
-  geom_line() +
-  geom_point()
-
-```
